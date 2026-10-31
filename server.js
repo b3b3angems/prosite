@@ -10,6 +10,7 @@ const sql = neon(DATABASE_URL || 'postgresql://x:x@localhost/x');
 const EK = crypto.createHash('sha256').update(ENC_KEY || '').digest();
 const SRC = ['تيك توك', 'إنستقرام', 'سناب شات', 'واتساب'], ST = ['new', 'working', 'done', 'cancelled'], HEX = /^#[0-9a-f]{6}$/i;
 
+const CAP = [{ t: 3, i: 1, h: 0 }, { t: 10, i: 2, h: 0 }, { t: 7, i: 1, h: 8 }], IMG = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/, URL_ = /^https?:\/\/[^\s]{3,300}$/i;
 const b64 = b => Buffer.from(b).toString('base64url');
 const hmac = s => crypto.createHmac('sha256', SEC || '').update(s).digest('base64url');
 const sign = p => { const h = b64('{"a":"HS256"}'), b = b64(JSON.stringify(p)); return `${h}.${b}.${hmac(h + '.' + b)}`; };
@@ -32,6 +33,26 @@ const unseal = code => {
 };
 const str = (v, max) => typeof v === 'string' ? v.trim().slice(0, max) : '';
 
+const hits = new Map();
+const limited = ip => { const n = Date.now(), a = (hits.get(ip) || []).filter(x => n - x < 60000); a.push(n); hits.set(ip, a); return a.length > 30; };
+const clean = st => {
+  const t = {}, c = {}, h = {}, i = {};
+  Object.entries(st.t || {}).slice(0, 12).forEach(([k, x]) => { if (/^\d{1,2}$/.test(k) && typeof x === 'string') t[k] = x.slice(0, 1000); });
+  Object.entries(st.c || {}).slice(0, 12).forEach(([k, x]) => { if (HEX.test(k) && HEX.test(x)) c[k.toLowerCase()] = x.toLowerCase(); });
+  Object.entries(st.h || {}).slice(0, 12).forEach(([k, x]) => { if (/^\d{1,2}$/.test(k) && typeof x === 'string' && URL_.test(x.trim())) h[k] = x.trim(); });
+  Object.entries(st.i && typeof st.i === 'object' ? st.i : {}).slice(0, 6).forEach(([k, x]) => { if (/^\d$/.test(k) && typeof x === 'string' && x.length < 400000 && IMG.test(x)) i[k] = x; });
+  return { t, c, h, i };
+};
+// نسخة سحابية للتصميم: رابط استرجاع فريد (7 أيام للمسودة، 30 يوماً إذا ارتبطت بطلب)
+const saveDraft = async (uid, pkg, tpl, state, oid) => {
+  const tok = crypto.randomBytes(18).toString('base64url'), days = (oid ? 30 : 7) + ' days';
+  const [d] = await sql`insert into drafts(user_id,pkg,tpl,state,token,order_id,expires_at)
+    values(${uid},${pkg},${tpl},${JSON.stringify(state)},${tok},${oid || null},now()+${days}::interval)
+    on conflict (user_id,pkg,tpl) where order_id is null
+    do update set state=excluded.state, updated_at=now(), expires_at=excluded.expires_at
+    returning token, expires_at`;
+  return d;
+};
 async function init() {
   await sql`create table if not exists users(id serial primary key, name text not null, email text unique not null,
     role text not null default 'customer' check (role in ('customer','staff','admin')), active boolean not null default true,
@@ -44,6 +65,11 @@ async function init() {
     status text not null default 'new' check (status in ('new','working','done','cancelled')),
     assigned_to int references users(id) on delete set null, created_at timestamptz not null default now(), updated_at timestamptz not null default now())`;
   await sql`create index if not exists orders_user on orders(user_id)`;
+  await sql`create table if not exists drafts(id serial primary key, user_id int not null references users(id) on delete cascade, pkg int not null, tpl int not null,
+    state text not null, token text unique not null, order_id int references orders(id) on delete set null,
+    updated_at timestamptz not null default now(), expires_at timestamptz not null)`;
+  await sql`create unique index if not exists drafts_active on drafts(user_id,pkg,tpl) where order_id is null`;
+  await sql`create table if not exists order_images(order_id int not null references orders(id) on delete cascade, idx int not null, data text not null, primary key(order_id, idx))`;
   await sql`create index if not exists orders_assignee on orders(assigned_to, status)`;
 }
 
@@ -91,20 +117,41 @@ async function api(req, res) {
     }
     if (r0 === 'logout' && M === 'POST') { cookie('pr', '', 0); return J(200, { ok: 1 }); }
 
+    if (r0 === 'drafts' && r1 === 't' && r2 && M === 'GET') {
+      if (limited(req.ip)) return E(429, 'محاولات كثيرة، انتظر قليلاً');
+      const [d] = await sql`select pkg,tpl,state,expires_at from drafts where token=${r2}`;
+      if (!d) return E(404, 'رابط الاسترجاع غير صحيح');
+      if (new Date(d.expires_at) < new Date()) return E(410, 'انتهت صلاحية رابط الاسترجاع');
+      return J(200, { pkg: d.pkg, tpl: d.tpl, state: JSON.parse(d.state) });
+    }
     const p = verify(ck.pr); let me = null;
     if (p) [me] = await sql`select id,name,email,role,picture from users where id=${p.id} and active`;
     if (r0 === 'me') return me ? J(200, me) : E(401, 'غير مسجّل');
     if (!me) return E(401, 'سجّل الدخول أولاً');
     const isStaff = me.role === 'staff' || me.role === 'admin', isAdmin = me.role === 'admin';
 
+    if (r0 === 'drafts' && !r1 && M === 'PUT') {
+      const pkg = +B.pkg, tpl = +B.tpl;
+      if (!(pkg >= 1 && pkg <= 3 && tpl >= 1 && tpl <= 5)) return E(400, 'قالب غير صالح');
+      const d = await saveDraft(me.id, pkg, tpl, clean(B.state || {}), null);
+      return J(200, { link: BASE + '/?restore=' + d.token, expires: d.expires_at });
+    }
+    if (r0 === 'drafts' && r1 === 'latest' && M === 'GET') {
+      const [d] = await sql`select pkg,tpl,state,updated_at,token from drafts where user_id=${me.id} and order_id is null and expires_at>now() order by updated_at desc limit 1`;
+      return J(200, d ? { pkg: d.pkg, tpl: d.tpl, state: JSON.parse(d.state), at: d.updated_at, link: BASE + '/?restore=' + d.token } : {});
+    }
     if (r0 === 'orders' && !r1 && M === 'POST') {
       const pkg = +B.pkg, tpl = +B.tpl, u = B.u || {};
-      const cu = { n: str(u.n, 80), d: str(u.d, 10), r: str(u.r, 600), s: str(u.s, 20) };
+      const cu = { n: str(u.n, 80), d: str(u.d, 10), r: str(u.r, 600), s: str(u.s, 20), p: str(u.p, 20).replace(/[^\d+]/g, '') };
       if (!(pkg >= 1 && pkg <= 3 && tpl >= 1 && tpl <= 5)) return E(400, 'قالب غير صالح');
-      if (!cu.n || !cu.r || !SRC.includes(cu.s) || !(new Date(cu.d) <= new Date())) return E(400, 'أكمل البيانات الإجبارية بشكل صحيح');
+      if (!cu.n || !cu.r || !SRC.includes(cu.s) || !/^\+?\d{9,15}$/.test(cu.p) || !(new Date(cu.d) <= new Date())) return E(400, 'أكمل البيانات الإجبارية بشكل صحيح');
       const t = {}, c = {};
       Object.entries(B.t || {}).slice(0, 60).forEach(([k, v]) => { if (/^\d{1,2}$/.test(k) && typeof v === 'string') t[k] = v.slice(0, 1000); });
       Object.entries(B.c || {}).slice(0, 12).forEach(([k, v]) => { if (HEX.test(k) && HEX.test(v)) c[k.toLowerCase()] = v.toLowerCase(); });
+      const h = {}, im = {}, cap = CAP[pkg - 1];
+      Object.entries(B.h || {}).slice(0, 12).forEach(([k, x]) => { if (/^\d{1,2}$/.test(k) && typeof x === 'string' && URL_.test(x.trim())) h[k] = x.trim(); });
+      Object.entries(B.imgs && typeof B.imgs === 'object' ? B.imgs : {}).slice(0, 6).forEach(([k, x]) => { if (/^\d$/.test(k) && typeof x === 'string' && x.length < 400000 && IMG.test(x)) im[k] = x; });
+      if (Object.keys(t).length > cap.t || Object.keys(h).length > cap.h || Object.keys(im).length > cap.i) return E(400, 'تجاوزت حدود الباقة المختارة');
       const [{ n }] = await sql`select count(*)::int as n from orders where user_id=${me.id} and created_at>now()-interval '1 hour'`;
       if (n >= 10) return E(429, 'تجاوزت الحد المسموح، حاول لاحقاً');
       const [{ id }] = await sql`select nextval(pg_get_serial_sequence('orders','id'))::int as id`;
@@ -112,21 +159,25 @@ async function api(req, res) {
       const [a] = await sql`select u.id from users u left join orders o on o.assigned_to=u.id and o.status in ('new','working')
         where u.active and u.role='staff' group by u.id order by count(o.id), u.id limit 1`;
       const [ad] = a ? [a] : await sql`select id from users where active and role='admin' order by id limit 1`;
-      const code = seal({ no: 'PR-' + (1000 + id), pkg, tpl, t, c, imgs: Math.min(+B.imgs || 0, 20), u: cu, at: Date.now() });
+      const code = seal({ no: 'PR-' + (1000 + id), pkg, tpl, t, c, h, imgs: Object.keys(im).length, u: cu, em: me.email, at: Date.now() });
       await sql`insert into orders(id,user_id,pkg,tpl,code,assigned_to) values(${id},${me.id},${pkg},${tpl},${code},${ad ? ad.id : null})`;
-      return J(200, { no: 'PR-' + (1000 + id), code });
+      for (const [k, x] of Object.entries(im)) await sql`insert into order_images(order_id,idx,data) values(${id},${+k},${x})`;
+      const dr = await saveDraft(me.id, pkg, tpl, { t, c, h, i: im }, id);
+      await sql`delete from drafts where user_id=${me.id} and pkg=${pkg} and tpl=${tpl} and order_id is null`;
+      return J(200, { no: 'PR-' + (1000 + id), code, restore: BASE + '/?restore=' + dr.token });
     }
     if (r0 === 'orders' && !r1 && M === 'GET') {
-      if (!isStaff) return J(200, await sql`select id,pkg,tpl,status,created_at from orders where user_id=${me.id} order by id desc limit 100`);
-      return J(200, await sql`select o.id,o.pkg,o.tpl,o.status,o.created_at,o.assigned_to,c.name as cname,s.name as sname
+      if (!isStaff) return J(200, await sql`select o.id,o.pkg,o.tpl,o.status,o.created_at,(select token from drafts d where d.order_id=o.id limit 1) as token from orders o where o.user_id=${me.id} order by o.id desc limit 100`);
+      const rows = await sql`select o.id,o.code,o.pkg,o.tpl,o.status,o.created_at,o.assigned_to,c.name as cname,c.email as cemail,s.name as sname
         from orders o join users c on c.id=o.user_id left join users s on s.id=o.assigned_to
-        where ${!!isAdmin} or o.assigned_to=${me.id} order by o.id desc limit 200`);
+        where ${!!isAdmin} or o.assigned_to=${me.id} order by o.id desc limit 200`;
+      return J(200, rows.map(({ code, ...r }) => { try { r.cphone = unseal(code).u.p; } catch (e) { /* ignore */ } return r; }));
     }
     if (r0 === 'orders' && r1 && /^\d+$/.test(r1)) {
       if (!isStaff) return E(403, 'غير مصرح');
       const id = +r1, [o] = await sql`select id,code,assigned_to from orders where id=${id}`;
       if (!o || (!isAdmin && o.assigned_to !== me.id)) return E(404, 'الطلب غير موجود');
-      if (M === 'GET') return J(200, { data: unseal(o.code) });
+      if (M === 'GET') { const rows = await sql`select idx,data from order_images where order_id=${id}`; return J(200, { data: unseal(o.code), images: Object.fromEntries(rows.map(r => [r.idx, r.data])) }); }
       if (M === 'PATCH') {
         if (B.status !== undefined) { if (!ST.includes(B.status)) return E(400, 'حالة غير صالحة'); await sql`update orders set status=${B.status}, updated_at=now() where id=${id}`; }
         if (B.assigned_to !== undefined) {
@@ -137,10 +188,21 @@ async function api(req, res) {
         return J(200, { ok: 1 });
       }
     }
+    if (r0 === 'users') {
+      if (!isAdmin) return E(403, 'للمدير فقط');
+      if (M === 'GET' && !r1) return J(200, await sql`select id,name,email,role,active from users order by id desc limit 300`);
+      if (M === 'PATCH' && r1 && /^\d+$/.test(r1)) {
+        const uid = +r1, [tu] = await sql`select id,email from users where id=${uid}`;
+        if (!tu) return E(404, 'غير موجود');
+        if (uid === me.id || tu.email === ADMIN) return E(400, 'لا يمكن تعديل هذا الحساب');
+        if (!['customer', 'staff', 'admin'].includes(B.role)) return E(400, 'دور غير صالح');
+        await sql`update users set role=${B.role} where id=${uid}`; return J(200, { ok: 1 });
+      }
+    }
     if (r0 === 'staff' && M === 'GET') return isAdmin ? J(200, await sql`select id,name from users where active and role in ('staff','admin') order by name`) : E(403, 'للمدير فقط');
     if (r0 === 'decode' && M === 'POST') {
       if (!isStaff) return E(403, 'غير مصرح');
-      try { return J(200, { data: unseal(B.code) }); } catch (e) { return E(400, 'الكود غير صالح أو تم العبث به'); }
+      try { const d = unseal(B.code), oid = parseInt(String(d.no).replace('PR-', ''), 10) - 1000; const rows = oid > 0 ? await sql`select idx,data from order_images where order_id=${oid}` : []; return J(200, { data: d, images: Object.fromEntries(rows.map(r => [r.idx, r.data])) }); } catch (e) { return E(400, 'الكود غير صالح أو تم العبث به'); }
     }
     return E(404, 'غير موجود');
   } catch (e) { console.error(e); return E(500, 'خطأ في الخادم'); }
@@ -150,7 +212,7 @@ const app = express();
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use((q, r, n) => { r.setHeader('X-Content-Type-Options', 'nosniff'); r.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin'); n(); });
-app.use(express.json({ limit: '100kb' }));
+app.use(express.json({ limit: '2mb' }));
 app.all('/api/*', api);
 // يدعم الشكل المسطّح (index.html بجانب server.js) أو مجلد public
 const ROOT = require('fs').existsSync(path.join(__dirname, 'public', 'index.html')) ? path.join(__dirname, 'public') : __dirname;
@@ -159,5 +221,6 @@ app.use((q, r, n) => /\.(png|jpe?g|webp|gif|svg|ico|woff2?)$/i.test(q.path) ? n(
 app.use(express.static(ROOT, { index: false }));
 app.listen(process.env.PORT || 3000, async () => {
   console.log('listening on', process.env.PORT || 3000);
+  setInterval(() => { hits.clear(); sql`delete from drafts where expires_at<now()`.catch(() => {}); }, 3600000);
   try { await init(); console.log('db ready'); } catch (e) { console.error('db init failed:', e.message); }
 });
