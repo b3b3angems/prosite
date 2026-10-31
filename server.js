@@ -152,7 +152,11 @@ app.disable('x-powered-by');
 app.use((q, r, n) => { r.setHeader('X-Content-Type-Options', 'nosniff'); r.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin'); n(); });
 app.use(express.json({ limit: '100kb' }));
 app.all('/api/*', api);
-app.use(express.static(path.join(__dirname, 'public')));
+// يدعم الشكل المسطّح (index.html بجانب server.js) أو مجلد public
+const ROOT = require('fs').existsSync(path.join(__dirname, 'public', 'index.html')) ? path.join(__dirname, 'public') : __dirname;
+app.get('/', (q, r) => r.sendFile(path.join(ROOT, 'index.html')));
+app.use((q, r, n) => /\.(png|jpe?g|webp|gif|svg|ico|woff2?)$/i.test(q.path) ? n() : r.status(404).send('Not found'));
+app.use(express.static(ROOT, { index: false }));
 app.listen(process.env.PORT || 3000, async () => {
   console.log('listening on', process.env.PORT || 3000);
   try { await init(); console.log('db ready'); } catch (e) { console.error('db init failed:', e.message); }
