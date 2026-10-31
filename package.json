@@ -1,0 +1,1 @@
+{"name":"prosite","private":true,"version":"1.0.0","scripts":{"start":"node server.js"},"engines":{"node":">=18"},"dependencies":{"@neondatabase/serverless":"^0.10.4","express":"^4.21.2"}}
