@@ -81,7 +81,7 @@ async function init() {
   await sql`create table if not exists order_images(order_id int not null references orders(id) on delete cascade, idx int not null, data text not null, primary key(order_id, idx))`;
   await sql`create index if not exists orders_assignee on orders(assigned_to, status)`;
   await sql`do $$ begin if not exists (select 1 from pg_constraint where conname='orders_pkg_chk2') then alter table orders drop constraint if exists orders_pkg_check; alter table orders add constraint orders_pkg_chk2 check (pkg between 1 and 4); end if; end $$`;
-  await sql`do $$ begin if not exists (select 1 from pg_constraint where conname='orders_tpl_chk2') then alter table orders drop constraint if exists orders_tpl_check; alter table orders add constraint orders_tpl_chk2 check (tpl between 1 and 8); end if; end $$`;
+  await sql`do $$ begin if not exists (select 1 from pg_constraint where conname='orders_tpl_chk2') then alter table orders drop constraint if exists orders_tpl_check; alter table orders add constraint orders_tpl_chk2 check (tpl between 1 and 16); end if; end $$`;
 }
 
 // سياسة الاحتفاظ: حذف صور الطلبات بعد 30 يوماً ونسخ الاسترجاع المنتهية
@@ -151,7 +151,7 @@ async function api(req, res) {
     if (r0 === 'drafts' && !r1 && M === 'DELETE') { await sql`delete from drafts where user_id=${me.id} and order_id is null`; return J(200, { ok: 1 }); }
     if (r0 === 'drafts' && !r1 && M === 'PUT') {
       const pkg = +B.pkg, tpl = +B.tpl;
-      if (!(pkg >= 1 && pkg <= 4 && tpl >= 1 && tpl <= (pkg === 4 ? 8 : 5))) return E(400, 'قالب غير صالح');
+      if (!(pkg >= 1 && pkg <= 4 && tpl >= 1 && tpl <= (pkg === 4 ? 16 : 5))) return E(400, 'قالب غير صالح');
       if (!allow('dw1:' + me.id, 1, 1000) || !allow('dw:' + me.id, 40, 600000)) return E(429, 'سرعة الحفظ عالية، سيُعاد الحفظ تلقائياً');
       const stt = JSON.stringify(clean(B.state || {}, pkg));
       if (stt.length > 520000) return E(413, 'حجم المسودة كبير، صغّر الصور');
@@ -169,7 +169,7 @@ async function api(req, res) {
       const idem = typeof B.idem === 'string' && /^[A-Za-z0-9]{10,40}$/.test(B.idem) ? B.idem : null;
       if (idem) { const ex = await existingOrder(me.id, idem); if (ex) return J(200, ex); }
       const cu = { n: str(u.n, 80), d: str(u.d, 10), r: str(u.r, 600), s: str(u.s, 20), p: str(u.p, 20).replace(/[^\d+]/g, '') };
-      if (!(pkg >= 1 && pkg <= 4 && tpl >= 1 && tpl <= (pkg === 4 ? 8 : 5))) return E(400, 'قالب غير صالح');
+      if (!(pkg >= 1 && pkg <= 4 && tpl >= 1 && tpl <= (pkg === 4 ? 16 : 5))) return E(400, 'قالب غير صالح');
       if (!cu.n || !cu.r || !SRC.includes(cu.s) || !/^\+?\d{9,15}$/.test(cu.p) || !(new Date(cu.d) <= new Date())) return E(400, 'أكمل البيانات الإجبارية بشكل صحيح');
       const t = {}, c = {};
       Object.entries(B.t || {}).slice(0, 60).forEach(([k, v]) => { if (/^\d{1,2}$/.test(k) && typeof v === 'string') t[k] = v.slice(0, 1000); });
