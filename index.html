@@ -82,8 +82,17 @@
         .prev-tag{font-size:10px;letter-spacing:.18em;text-transform:uppercase;padding:5px 12px;border:1px solid var(--border);color:rgba(245,245,240,.28);font-family:'Space Grotesk',sans-serif;white-space:nowrap}
         .prev-tag.active{background:var(--white);color:var(--black);border-color:var(--white)}
         @media(max-width:860px){.preview{padding:0 22px 72px}.prev-grid{grid-template-columns:1fr}.prev-info{padding:18px 20px}}
+    .pkg-custom-top{grid-column:1/-1;border-left:none!important;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr 290px;gap:40px;align-items:center;background:linear-gradient(135deg,rgba(245,245,240,.04) 0%,rgba(245,245,240,.008) 100%)}.pkg-custom-top .pkg-desc{margin:0 0 20px;min-height:0}.pkg-custom-top .pkg-badge{margin-bottom:14px}.pkg-custom-side{display:flex;flex-direction:column;align-items:stretch;justify-content:center;border-right:1px solid var(--border);padding-right:36px}
+    .pkg-services-hdr{grid-column:1/-1;border-top:1px solid var(--border);border-left:none!important;padding:36px 48px 20px;background:rgba(245,245,240,.015);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+    .pkg.pkg-col1{border-left:1px solid var(--border)}
+    .pkg.pkg-col2{border-left:1px solid var(--border)}
+    .pkg.pkg-col3{border-left:none!important}
+    .pkg.pkg-service{border-top:1px solid var(--border)}
+    .pkg.pkg-service.s1{border-left:1px solid var(--border)}
+    .pkg.pkg-service.s2{border-left:1px solid var(--border)}
+    .pkg.pkg-service.s3{border-left:none!important}
     .pkgx{grid-column:1/-1;border-left:none!important;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 280px;gap:40px;align-items:center}.pkgx .pkg-desc{margin:0;min-height:0}.pkgx .pkg-badge{margin-bottom:18px}
-@media(max-width:860px){.pkgx{display:block}.pkgx-side{margin-top:24px}}
+    @media(max-width:860px){.pkg-custom-top{display:block}.pkg-custom-side{border-right:none;padding-right:0;margin-top:26px}.pkg-services-hdr{padding:24px 20px}.pkg.pkg-service{border-left:none!important;border-top:1px solid var(--border)}.pkgx{display:block}.pkgx-side{margin-top:24px}}
 .pvt{display:flex;gap:1px;background:var(--border);border:1px solid var(--border);border-bottom:0}
 .pvb{flex:1;background:var(--black);color:rgba(245,245,240,.5);padding:16px;font:700 14px 'Noto Kufi Arabic',sans-serif;border:0;cursor:none;transition:background .25s,color .25s}
 .pvb:hover{color:var(--white)}.pvb.on{background:var(--white);color:var(--black)}
@@ -125,7 +134,37 @@
         <h2 class="sec-title">اختر باقتك</h2>
     </div>
     <div class="pkg-grid">
-        <div class="pkg fade">
+        <!-- خيار مخصص عريض في الأعلى فوق الباقات والقوالب -->
+        <div class="pkg pkg-custom-top fade">
+            <div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+                    <span class="pkg-badge active" style="margin-bottom:0">خيار مخصص • Custom</span>
+                    <span class="pkg-badge plain" style="margin-bottom:0">برمجة وتصميم خاص 100%</span>
+                </div>
+                <h3 class="pkg-name" style="font-size:clamp(24px,2.6vw,34px);margin-bottom:12px">خيار مخصص — برمجة وتطوير حسب الطلب</h3>
+                <p class="pkg-desc" style="max-width:840px;font-size:15px;line-height:1.8;color:rgba(245,245,240,.65);margin-bottom:22px">
+                    هل تحتاج موقعاً استثنائياً بمواصفات برمجية دقيقة خارج إطار القوالب الجاهزة؟ نبني لك مشروعك من الصفر وفق هويتك ورؤيتك التجارية: واجهات عصرية متجاوبة، صفحات غير محدودة، لوحات تحكم ديناميكية، ربط بوابات الدفع وخدمات الـ APIs، وأعلى معايير الحماية والأداء السريع.
+                </p>
+                <div style="display:flex;flex-wrap:wrap;gap:8px 12px">
+                    <span style="font-size:12px;padding:6px 14px;border:1px solid var(--border);color:rgba(245,245,240,.7);background:rgba(245,245,240,.02)">✦ تصميم فريد خاص بك</span>
+                    <span style="font-size:12px;padding:6px 14px;border:1px solid var(--border);color:rgba(245,245,240,.7);background:rgba(245,245,240,.02)">✦ لوحة تحكم وإدارة محتوى</span>
+                    <span style="font-size:12px;padding:6px 14px;border:1px solid var(--border);color:rgba(245,245,240,.7);background:rgba(245,245,240,.02)">✦ ربط APIs وبوابات الدفع</span>
+                    <span style="font-size:12px;padding:6px 14px;border:1px solid var(--border);color:rgba(245,245,240,.7);background:rgba(245,245,240,.02)">✦ نطاق وهوية واستضافة خاصة</span>
+                    <span style="font-size:12px;padding:6px 14px;border:1px solid var(--border);color:rgba(245,245,240,.7);background:rgba(245,245,240,.02)">✦ دعم فني وتعديلات مستمرة</span>
+                </div>
+            </div>
+            <div class="pkg-custom-side">
+                <div style="text-align:center;margin-bottom:18px">
+                    <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(245,245,240,.35);display:block;margin-bottom:4px;font-family:'Space Grotesk',sans-serif">Custom Solution</span>
+                    <div style="font-family:'Noto Kufi Arabic','Space Grotesk',sans-serif;font-size:clamp(22px,2vw,28px);font-weight:900;color:var(--white);line-height:1.2">حسب متطلباتك</div>
+                    <span style="font-size:13px;color:rgba(245,245,240,.4);margin-top:4px;display:block">بأسعار تنافسية مرنة</span>
+                </div>
+                <a href="https://wa.me/966546828565?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%B7%D9%84%D8%A8%20(%D8%AE%D9%8A%D8%A7%D8%B1%20%D9%85%D8%AE%D8%B5%D8%B5%20-%20%D8%A8%D8%B1%D9%85%D8%AC%D8%A9%20%D9%88%D8%AA%D8%B7%D9%88%D9%8A%D8%B1%20%D8%AE%D8%A7%D8%B5%20%D8%AD%D8%B3%D8%A8%20%D8%A7%D9%84%D8%B7%D9%84%D8%A8)" target="_blank" rel="noopener" class="pkg-btn solid" style="padding:15px 20px;text-align:center">طلب مشروع مخصص ↗</a>
+            </div>
+        </div>
+
+        <!-- الباقات الثلاث الأساسية -->
+        <div class="pkg pkg-col1 fade">
             <span class="pkg-badge plain">Basic</span>
             <h3 class="pkg-name">قالب تعريفي</h3>
             <p class="pkg-desc">واجهة واحدة، صورة واحدة، وقسم تعريفي متكامل لمشروعك.</p>
@@ -133,7 +172,7 @@
             <span class="pkg-curr">ريال سعودي</span>
             <a href="#" onclick="openEd(0);return false" target="_blank" class="pkg-btn outline">ابدأ الطلب</a>
         </div>
-        <div class="pkg hot fade" style="transition-delay:.1s">
+        <div class="pkg hot pkg-col2 fade" style="transition-delay:.1s">
             <span class="pkg-badge active">الأكثر طلباً</span>
             <h3 class="pkg-name">قالب التعريف المطور</h3>
             <p class="pkg-desc">يشمل صورتين احترافية و 4 نصوص تعريفية منسقة بعناية.</p>
@@ -141,7 +180,7 @@
             <span class="pkg-curr">ريال سعودي</span>
             <a href="#" onclick="openEd(1);return false" target="_blank" class="pkg-btn solid">ابدأ الطلب</a>
         </div>
-        <div class="pkg fade" style="transition-delay:.2s">
+        <div class="pkg pkg-col3 fade" style="transition-delay:.2s">
             <span class="pkg-badge plain">Links</span>
             <h3 class="pkg-name">قالب الروابط</h3>
             <p class="pkg-desc">صفحة تجمع كافة روابط تواصلك الاجتماعي في مكان واحد بتصميم أنيق.</p>
@@ -149,7 +188,60 @@
             <span class="pkg-curr">ريال سعودي</span>
             <a href="#" onclick="openEd(2);return false" target="_blank" class="pkg-btn outline">ابدأ الطلب</a>
         </div>
-    <div class="pkg pkgx fade" style="transition-delay:.3s"><div><span class="pkg-badge plain">16 قالباً</span><h3 class="pkg-name">قوالب المجالات والأنشطة</h3><p class="pkg-desc">قوالب جاهزة بنصوص وتنسيق مناسب لمجالك: عيادة أو مركز طبي، مكتب استشارات، شركة خدمات، مطعم متكامل، مدرسة أو أكاديمية تدريب، مكتب عقاري، وكالة تسويق أو تصميم، ومعرض أعمال لمصمم، والمزيد.</p></div><div class="pkgx-side"><span class="pkg-curr" style="margin:0 0 18px">السعر يُحدَّد عند التواصل</span><a href="#" onclick="openEd(3);return false" class="pkg-btn solid">ابدأ الطلب</a></div></div>
+
+        <!-- قوالب المجالات والأنشطة -->
+        <div class="pkg pkgx fade" style="transition-delay:.3s">
+            <div>
+                <span class="pkg-badge plain">16 قالباً</span>
+                <h3 class="pkg-name">قوالب المجالات والأنشطة</h3>
+                <p class="pkg-desc">قوالب جاهزة بنصوص وتنسيق مناسب لمجالك: عيادة أو مركز طبي، مكتب استشارات، شركة خدمات، مطعم متكامل، مدرسة أو أكاديمية تدريب، مكتب عقاري، وكالة تسويق أو تصميم، ومعرض أعمال لمصمم، والمزيد.</p>
+            </div>
+            <div class="pkgx-side">
+                <span class="pkg-curr" style="margin:0 0 18px">السعر يُحدَّد عند التواصل</span>
+                <a href="#" onclick="openEd(3);return false" class="pkg-btn solid">ابدأ الطلب</a>
+            </div>
+        </div>
+
+        <!-- خدمات الصيانة، السيرفر وقواعد البيانات بأسعار مناسبة (تحت) -->
+        <div class="pkg-services-hdr fade">
+            <div>
+                <span class="pkg-badge plain" style="margin-bottom:8px">خدمات مساندة • بأسعار مناسبة</span>
+                <h4 style="font-size:22px;font-weight:900;letter-spacing:-.01em">خدمات الصيانة والسيرفر وقواعد البيانات</h4>
+                <p style="margin:4px 0 0;font-size:14px;color:rgba(245,245,240,.45);font-weight:300">
+                    استقرار وأمان دائم لموقعك وبياناتك بأسعار رمزية ومناسبة للجميع.
+                </p>
+            </div>
+            <div style="font-size:12px;color:rgba(245,245,240,.5);font-family:'Space Grotesk',sans-serif">
+                Support & Infrastructure
+            </div>
+        </div>
+
+        <div class="pkg pkg-service s1 fade">
+            <span class="pkg-badge plain">Maintenance</span>
+            <h3 class="pkg-name">خدمات الصيانة والدعم</h3>
+            <p class="pkg-desc">صيانة دورية، فحص الأمان وسد الثغرات، تحديث المحتوى وتعديل النصوص، وتسريع الموقع وحل أي مشكلات فنية أولاً بأول.</p>
+            <div class="pkg-price">49</div>
+            <span class="pkg-curr">ريال شهرياً (سعر مناسب)</span>
+            <a href="https://wa.me/966546828565?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%A7%D8%B4%D8%AA%D8%B1%D8%A7%D9%83%20%D8%A8%D8%AE%D8%AF%D9%85%D8%A9%20%D8%A7%D9%84%D8%B5%D9%8A%D8%A7%D9%86%D8%A9%20%D9%88%D8%A7%D9%84%D8%AF%D8%B9%D9%85%20%D8%A7%D9%84%D9%81%D9%86%D9%8A%20(49%20%D8%B1%D9%8A%D8%A7%D9%84%2F%D8%B4%D9%87%D8%B1)" target="_blank" rel="noopener" class="pkg-btn outline">طلب خدمة الصيانة</a>
+        </div>
+
+        <div class="pkg pkg-service s2 hot fade" style="transition-delay:.1s">
+            <span class="pkg-badge active">Database & Server</span>
+            <h3 class="pkg-name">قاعدة بيانات وسيرفر</h3>
+            <p class="pkg-desc">ربط وتجهيز قاعدة بيانات سحابية متقدمة (PostgreSQL / Supabase / Firestore) وسيرفر استضافة سريع مع شهادة SSL وحماية وتشفير متكامل.</p>
+            <div class="pkg-price">79</div>
+            <span class="pkg-curr">ريال سعودي (ربط وإعداد)</span>
+            <a href="https://wa.me/966546828565?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%B7%D9%84%D8%A8%20%D8%AE%D8%AF%D9%85%D8%A9%20%D9%82%D8%A7%D8%B9%D8%AF%D8%A9%20%D8%A7%D9%84%D8%A8%D9%8A%D8%A7%D9%86%D8%A7%D8%AA%20%D9%88%D8%A7%D9%84%D8%B3%D9%8A%D8%B1%D9%81%D8%B1%20%D8%A7%D9%84%D8%B3%D8%AD%D8%A7%D8%A8%D9%8A%20(79%20%D8%B1%D9%8A%D8%A7%D9%84)" target="_blank" rel="noopener" class="pkg-btn solid">طلب السيرفر والبيانات</a>
+        </div>
+
+        <div class="pkg pkg-service s3 fade" style="transition-delay:.2s">
+            <span class="pkg-badge plain">Combo Pack</span>
+            <h3 class="pkg-name">الباقة المتكاملة</h3>
+            <p class="pkg-desc">صيانة دورية مستمرة + سيرفر سحابي وقاعدة بيانات + نسخ احتياطي يومي آمن ودعم فني على مدار الساعة بأفضل توفير.</p>
+            <div class="pkg-price">99</div>
+            <span class="pkg-curr">ريال شهرياً (وفر 29 ريال)</span>
+            <a href="https://wa.me/966546828565?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%B7%D9%84%D8%A8%20%D8%A7%D9%84%D8%A8%D8%A7%D9%82%D8%A9%20%D8%A7%D9%84%D9%85%D8%AA%D9%83%D8%A7%D9%85%D9%84%D8%A9%20(%D8%B5%D9%8A%D8%A7%D9%86%D8%A9%20%2B%20%D8%B3%D9%8A%D8%B1%D9%81%D8%B1%20%D9%88%D9%82%D8%A7%D8%B9%D8%AF%D8%A9%20%D8%A8%D9%8A%D8%A7%D9%86%D8%A7%D8%AA%20-%2099%20%D8%B1%D9%8A%D8%A7%D9%84)" target="_blank" rel="noopener" class="pkg-btn outline">طلب الباقة المتكاملة</a>
+        </div>
     </div>
 </section>
 <section class="preview" id="preview">
@@ -168,10 +260,14 @@
         <div>
             <div class="sel-wrap">
                 <select id="packageSelect">
+                    <option value="الخيار المخصص|0">خيار مخصص (برمجة وتطوير خاص) — حسب المتطلبات</option>
                     <option value="القالب الأساسي|99">قالب تعريفي — 99 ريال</option>
                     <option value="قالب التعريف المطور|149">قالب التعريف المطور — 149 ريال</option>
                     <option value="قالب الروابط|79">قالب الروابط — 79 ريال</option>
-                <option value="قوالب المجالات|0">قوالب المجالات (16 قالباً) — السعر عند التواصل</option>
+                    <option value="قوالب المجالات|0">قوالب المجالات (16 قالباً) — السعر عند التواصل</option>
+                    <option value="خدمات الصيانة|49">خدمات صيانة ودعم فني — 49 ريال شهرياً</option>
+                    <option value="قاعدة بيانات وسيرفر|79">قاعدة بيانات وسيرفر سحابي — 79 ريال</option>
+                    <option value="الباقة المتكاملة|99">الباقة المتكاملة (صيانة + سيرفر) — 99 ريال</option>
                 </select>
                 <span class="sel-arr">▾</span>
             </div>
@@ -196,7 +292,18 @@
         el.addEventListener('mouseenter',()=>cur.classList.add('big'));
         el.addEventListener('mouseleave',()=>cur.classList.remove('big'));
     });
-    function goToForm(){openEd(document.getElementById('packageSelect').selectedIndex)}
+    function goToForm(){
+        const sel=document.getElementById('packageSelect');
+        const v=sel.value.split('|')[0];
+        if(v==='القالب الأساسي'){openEd(0);return;}
+        if(v==='قالب التعريف المطور'){openEd(1);return;}
+        if(v==='قالب الروابط'){openEd(2);return;}
+        if(v==='قوالب المجالات'){openEd(3);return;}
+        const txt=sel.options[sel.selectedIndex].text;
+        const msg=`السلام عليكم، أرغب في طلب: (${txt})
+من منصة PROSITE للحلول البرمجية.`;
+        window.open(`https://wa.me/966546828565?text=${encodeURIComponent(msg)}`,'_blank');
+    }
     const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')}),{threshold:.12});
     document.querySelectorAll('.fade').forEach(el=>obs.observe(el));
     setTimeout(()=>document.querySelectorAll('.hero .fade').forEach(el=>el.classList.add('on')),80);
